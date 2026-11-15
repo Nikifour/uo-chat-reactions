@@ -6,6 +6,8 @@ Emoji reactions under any chat message in Foundry VTT: a line, a roll, an item
 or spell card. The number next to an emoji is how many people gave it; hover
 to see who. A star saves the message to your own favourites journal.
 
+![Reactions under chat messages, with the names on hover](docs/chat.png)
+
 ## Installation
 
 In Foundry's **Install Module** dialog, paste the manifest URL:
@@ -26,6 +28,8 @@ https://github.com/Nikifour/uo-chat-reactions/releases/latest/download/module.js
   Your own reactions are highlighted in gold.
 - One message can have several emoji.
 
+![The emoji picker](docs/picker.png)
+
 ## Favourites
 
 The star next to the smiley saves the message to your journal
@@ -41,6 +45,8 @@ How entries are arranged into pages is everyone's own choice:
 - **a page for each participant** — everything from one player or GM, with
   all of their characters, on one page; every entry says who was speaking;
 - **a page for each message**.
+
+![A favourites journal, one page for each speaker](docs/favourites.png)
 
 On a shared page entries run in the order the messages were sent. An entry
 is a copy, not a link: if the message is deleted or the chat is cleared, it

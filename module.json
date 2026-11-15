@@ -18,6 +18,20 @@
       "name": "timmi"
     }
   ],
+  "media": [
+    {
+      "type": "screenshot",
+      "url": "https://raw.githubusercontent.com/Nikifour/uo-chat-reactions/main/docs/chat.png"
+    },
+    {
+      "type": "screenshot",
+      "url": "https://raw.githubusercontent.com/Nikifour/uo-chat-reactions/main/docs/picker.png"
+    },
+    {
+      "type": "screenshot",
+      "url": "https://raw.githubusercontent.com/Nikifour/uo-chat-reactions/main/docs/favourites.png"
+    }
+  ],
   "esmodules": [
     "scripts/uo-reactions.mjs"
   ],
