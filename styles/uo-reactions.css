@@ -1,0 +1,126 @@
+/* UO · Реакции в чате */
+
+/* Кнопка в шапке видна только под мышью: в обычном чтении чата она не мешает. */
+.chat-message .uo-r-add {
+  opacity: 0;
+  transition: opacity 0.15s;
+  cursor: pointer;
+}
+.chat-message:hover .uo-r-add,
+.chat-message .uo-r-add:focus-visible {
+  opacity: 0.65;
+}
+.chat-message .uo-r-add:hover {
+  opacity: 1;
+}
+
+/* Звезда избранного: как улыбка, но отмеченная горит всегда. */
+.chat-message .uo-r-fav {
+  opacity: 0;
+  transition: opacity 0.15s;
+  cursor: pointer;
+}
+.chat-message:hover .uo-r-fav,
+.chat-message .uo-r-fav:focus-visible {
+  opacity: 0.65;
+}
+.chat-message .uo-r-fav:hover,
+.chat-message .uo-r-fav.on {
+  opacity: 1;
+}
+.chat-message .uo-r-fav.on {
+  color: #d4ab45;
+}
+
+/* Значки под сообщением. Цвета от цвета текста — чат бывает и светлым, и тёмным. */
+.uo-reakcii {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+.uo-reakcii .uo-r-chip {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 4px;
+  width: auto;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 1px 7px 1px 5px;
+  font-size: var(--font-size-12, 12px);
+  line-height: 1.4;
+  color: inherit;
+  background: color-mix(in srgb, currentColor 7%, transparent);
+  border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+  border-radius: 10px;
+  box-shadow: none;
+  cursor: pointer;
+}
+.uo-reakcii .uo-r-chip:hover {
+  border-color: color-mix(in srgb, currentColor 45%, transparent);
+}
+.uo-reakcii .uo-r-chip.mine {
+  background: color-mix(in srgb, #b8953f 24%, transparent);
+  border-color: #b8953f;
+}
+.uo-reakcii .uo-r-count {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.uo-r-emoji,
+.uo-r-picker button {
+  font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
+}
+
+/* Набор значков: всплывает над всем, как контекстное меню. */
+.uo-r-picker {
+  position: fixed;
+  z-index: 100000;
+  display: grid;
+  grid-template-columns: repeat(5, 34px);
+  gap: 2px;
+  padding: 5px;
+  background: rgba(18, 16, 13, 0.96);
+  border: 1px solid #8a7550;
+  border-radius: 8px;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.65);
+}
+.uo-r-picker button {
+  width: 34px;
+  height: 34px;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  font-size: 20px;
+  line-height: 1;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  box-shadow: none;
+  cursor: pointer;
+}
+.uo-r-picker button:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+.uo-r-picker button.mine {
+  background: rgba(184, 149, 63, 0.3);
+  border-color: #b8953f;
+}
+
+/* Избранное в журнале: записи одной страницы разделены чертой. */
+.uo-izbr + .uo-izbr {
+  margin-top: 0.8em;
+  padding-top: 0.6em;
+  border-top: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+}
+.uo-izbr .uo-izbr-kogda {
+  margin-bottom: 0.3em;
+  font-size: 0.9em;
+  opacity: 0.75;
+}
+.uo-izbr blockquote {
+  margin: 0;
+}

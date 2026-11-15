@@ -1,0 +1,19 @@
+{
+  "Без имени": "Unnamed",
+  "В избранное": "Add to favourites",
+  "В избранном: журнал «{имя}».": "Saved to favourites: journal “{имя}”.",
+  "Ведущего нет в игре: журнал избранного заводит ведущий, а его нет. Попробуйте, когда он зайдёт.": "No GM is in the game: the favourites journal is created by the GM. Try again once a GM joins.",
+  "Ведущего нет в игре: отклик на чужое сообщение некому записать.": "No GM is in the game: there is nobody to record a reaction to someone else's message.",
+  "Значки, из которых выбирают игроки, через пробел. Уже поставленные значки остаются, даже если убрать их из набора.": "The emoji players choose from, separated by spaces. Reactions already given stay even if you remove their emoji from the set.",
+  "Избранное": "Favourites",
+  "Избранное: {имя}": "Favourites: {имя}",
+  "Избранное: страницы": "Favourites: pages",
+  "Как раскладывать избранное в вашем журнале. «Кто говорит» — по персонажу или имени в шапке сообщения; «участник» — по тому, кто сидит за клавиатурой, со всеми его персонажами. Уже записанное не перекладывается.": "How favourites are arranged in your journal. “Speaker” goes by the character or the name in the message header; “participant” goes by the person at the keyboard, with all of their characters. Entries already saved are not rearranged.",
+  "Набор реакций": "Reaction set",
+  "Отреагировать": "React",
+  "Страница на каждого участника": "A page for each participant",
+  "Страница на каждого, кто говорит": "A page for each speaker",
+  "Страница на каждое сообщение": "A page for each message",
+  "Убрано из избранного.": "Removed from favourites.",
+  "Убрать из избранного": "Remove from favourites"
+}

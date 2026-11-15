@@ -1,0 +1,74 @@
+{
+  "id": "uo-reactions",
+  "title": "UO · Chat Reactions",
+  "description": "<p>Emoji reactions under any chat message — lines, rolls, item and spell cards. Hover to see who reacted. A star saves the message to your own favourites journal. Any game system. English and Russian.</p><p>Отклик значком под любым сообщением чата: кто что поставил, видно по наведению. Звезда уносит сообщение в личный журнал избранного.</p>",
+  "version": "1.1.0",
+  "url": "https://github.com/Nikifour/uo-chat-reactions",
+  "manifest": "https://github.com/Nikifour/uo-chat-reactions/releases/latest/download/module.json",
+  "readme": "https://github.com/Nikifour/uo-chat-reactions/blob/main/README.md",
+  "bugs": "https://github.com/Nikifour/uo-chat-reactions/issues",
+  "changelog": "https://github.com/Nikifour/uo-chat-reactions/releases",
+  "license": "https://github.com/Nikifour/uo-chat-reactions/blob/main/LICENSE",
+  "compatibility": {
+    "minimum": "13",
+    "verified": "14.370"
+  },
+  "authors": [
+    {
+      "name": "timmi"
+    }
+  ],
+  "esmodules": [
+    "scripts/uo-reactions.mjs"
+  ],
+  "styles": [
+    "styles/uo-reactions.css"
+  ],
+  "socket": true,
+  "packFolders": [
+    {
+      "name": "UO",
+      "sorting": "m",
+      "color": "#7555a5",
+      "folders": [
+        {
+          "name": "Модули",
+          "sorting": "m",
+          "folders": [
+            {
+              "name": "Реакции в чате",
+              "sorting": "m",
+              "packs": [
+                "uo-reactions-help",
+                "uo-reactions-help-en"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "packs": [
+    {
+      "name": "uo-reactions-help",
+      "label": "Реакции в чате · Как пользоваться",
+      "path": "packs/uo-reactions-help",
+      "type": "JournalEntry",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      }
+    },
+    {
+      "name": "uo-reactions-help-en",
+      "label": "Chat Reactions · How to use",
+      "path": "packs/uo-reactions-help-en",
+      "type": "JournalEntry",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      }
+    }
+  ],
+  "download": "https://github.com/Nikifour/uo-chat-reactions/releases/download/v1.1.0/module.zip"
+}
