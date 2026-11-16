@@ -124,3 +124,42 @@
 .uo-izbr blockquote {
   margin: 0;
 }
+
+/* Свои значки — картинки ведущего: под сообщением размером со строку, в наборе крупнее. */
+.uo-reakcii img.uo-r-emoji {
+  width: 1.35em;
+  height: 1.35em;
+  object-fit: contain;
+  border: none;
+}
+.uo-r-picker img.uo-r-emoji {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  border: none;
+  vertical-align: middle;
+}
+.uo-r-picker i.uo-r-emoji,
+.uo-reakcii i.uo-r-emoji {
+  opacity: 0.6;
+}
+
+/* Редактор своих значков. */
+.uo-r-svoj-forma .uo-r-svoj-spisok {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 8px 0;
+}
+.uo-r-svoj-stroka {
+  display: grid;
+  grid-template-columns: 32px 1fr 2fr 32px 32px;
+  align-items: center;
+  gap: 6px;
+}
+.uo-r-svoj-stroka .uo-r-svoj-vid {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  border: none;
+}

@@ -37,3 +37,9 @@ The first time, the journal is created by the GM: Foundry does not let players c
 ## The emoji set
 
 The GM changes the set in the module settings: "Reaction set", emoji separated by spaces. New emoji show up in the picker at once. Reactions already given stay under their messages even if you remove their emoji from the set, and you can always take yours back.
+
+## Custom icons
+
+Besides emoji you can add your own images to the set: a party crest, the innkeeper's face, a mug of ale. In the module settings — "Custom icons" → "Edit icons": the image path (or the file picker button) and a label. Any image file works — png, webp, svg, gif. The images join the picker after the emoji; the label shows on hover.
+
+An icon removed from the list stays under the messages where it was already given, as a grey placeholder, and can be taken back like any other. You can swap an icon's image for another file without removing it: reactions already given stay.

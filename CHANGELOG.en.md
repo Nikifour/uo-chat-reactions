@@ -2,6 +2,11 @@
 
 One section per version, newest first.
 
+## 1.2.0 — 2026-11-16
+
+- **Custom icons.** The GM adds their own images to the reaction set, next to the emoji: a party crest, the innkeeper's face, a mug of ale. Module settings → "Custom icons" → "Edit icons": an image path or the file picker, and a label. The label shows on hover.
+- A removed icon stays under messages as a placeholder and can be taken back like any other. You can swap an icon's image for another file — reactions already given stay.
+
 ## 1.1.1 — 2026-11-16
 
 - Clicking the smiley again closes the emoji picker instead of reopening it.

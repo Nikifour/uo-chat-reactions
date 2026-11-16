@@ -34,11 +34,32 @@ const DEFAULT_LAYOUT = "govoryashchij";
 /** Набор по умолчанию: одобрение, смех, удивление, грусть, злость — и пара застольных. */
 const DEFAULT_SET = "👍 👎 😂 😮 😢 😡 ❤️ 🔥 🎲 💀";
 
+/**
+ * Свои значки — картинки ведущего: герб отряда, рожица трактирщика.
+ * Лежат списком `[{ id, name, src }]`, а в реакции пишется `img:<id>`, не путь:
+ * картинку можно заменить файлом получше, и поставленные значки не потеряются.
+ */
+const OWN_SETTING = "svoi";
+const OWN_MENU = "svoi-menu";
+const OWN_PREFIX = "img:";
+
 Hooks.once("init", () => {
   game.settings.register(MODULE_ID, SET_SETTING, {
     name: М("Набор реакций"),
     hint: М("Значки, из которых выбирают игроки, через пробел. Уже поставленные значки остаются, даже если убрать их из набора."),
     scope: "world", config: true, type: String, default: DEFAULT_SET
+  });
+  game.settings.register(MODULE_ID, OWN_SETTING, {
+    scope: "world", config: false, type: Array, default: [],
+    onChange: () => refreshOwnChips(),
+  });
+  game.settings.registerMenu(MODULE_ID, OWN_MENU, {
+    name: М("Свои значки"),
+    label: М("Править значки"),
+    hint: М("Свои картинки в наборе реакций, рядом с эмодзи: герб отряда, лицо трактирщика, кружка эля. Подойдёт любой файл картинки — png, webp, svg, gif."),
+    icon: "fa-solid fa-icons",
+    type: OwnReactionsMenu,
+    restricted: true,
   });
   // У каждого своя: журнал избранного личный, и раскладка в нём — тоже.
   game.settings.register(MODULE_ID, LAYOUT_SETTING, {
@@ -58,6 +79,8 @@ Hooks.once("i18nInit", async () => {
     setting.hint = Т(setting.hint);
     if (setting.choices) for (const k of Object.keys(setting.choices)) setting.choices[k] = Т(setting.choices[k]);
   }
+  const menu = game.settings.menus.get(`${MODULE_ID}.${OWN_MENU}`);
+  if (menu) for (const field of ["name", "label", "hint"]) menu[field] = Т(menu[field]);
 });
 
 Hooks.once("ready", () => {
@@ -84,7 +107,50 @@ function allowedSet() {
   const raw = game.settings.get(MODULE_ID, SET_SETTING) || DEFAULT_SET;
   const segmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" });
   const list = [...segmenter.segment(raw)].map(s => s.segment).filter(s => s.trim());
-  return [...new Set(list)];
+  return [...new Set([...list, ...ownList().map(o => OWN_PREFIX + o.id)])];
+}
+
+/** Свои значки ведущего, только целые записи. */
+function ownList() {
+  const list = game.settings.get(MODULE_ID, OWN_SETTING);
+  return Array.isArray(list) ? list.filter(o => o?.id && o?.src) : [];
+}
+
+/**
+ * Как показать значок: эмодзи — текстом, свой — картинкой. Свой, которого
+ * в списке уже нет, показывается заглушкой: снять его всё равно можно.
+ */
+function faceOf(key) {
+  if (!key.startsWith(OWN_PREFIX)) {
+    const span = document.createElement("span");
+    span.className = "uo-r-emoji";
+    span.textContent = key;
+    return span;
+  }
+  const own = ownList().find(o => OWN_PREFIX + o.id === key);
+  if (!own) {
+    const gone = document.createElement("i");
+    gone.className = "uo-r-emoji fa-solid fa-image";
+    return gone;
+  }
+  const img = document.createElement("img");
+  img.className = "uo-r-emoji uo-r-svoj";
+  img.src = own.src;
+  img.alt = own.name || "";
+  return img;
+}
+
+/** Имя значка для подсказки: у своего — подпись ведущего, у эмодзи — пусто. */
+function nameOf(key) {
+  return key.startsWith(OWN_PREFIX) ? ownList().find(o => OWN_PREFIX + o.id === key)?.name ?? "" : "";
+}
+
+/** Свои значки поменялись — перерисовать сообщения, где они стоят. */
+function refreshOwnChips() {
+  for (const message of game.messages ?? []) {
+    const used = Object.values(reactionsOf(message)).flat();
+    if (used.some(k => typeof k === "string" && k.startsWith(OWN_PREFIX))) ui.chat?.updateMessage?.(message);
+  }
 }
 
 /** Реакции сообщения: { userId: ["👍", …] }. */
@@ -505,11 +571,11 @@ function decorate(message, html) {
     chip.className = "uo-r-chip";
     if (users.includes(game.user)) chip.classList.add("mine");
     // Подсказку Foundry показывает как разметку, поэтому имена экранируются.
-    chip.dataset.tooltip = users.map(u => Handlebars.escapeExpression(u.name)).join(", ");
+    const who = users.map(u => esc(u.name)).join(", ");
+    const title = nameOf(emoji);
+    chip.dataset.tooltip = title ? `<strong>${esc(title)}</strong><br>${who}` : who;
     chip.dataset.tooltipDirection = "UP";
-    const face = document.createElement("span");
-    face.className = "uo-r-emoji";
-    face.textContent = emoji;
+    const face = faceOf(emoji);
     const count = document.createElement("span");
     count.className = "uo-r-count";
     count.textContent = users.length;
@@ -548,7 +614,9 @@ function openPicker(message, anchor) {
   for (const emoji of allowedSet()) {
     const button = document.createElement("button");
     button.type = "button";
-    button.textContent = emoji;
+    button.append(faceOf(emoji));
+    const title = nameOf(emoji);
+    if (title) button.dataset.tooltip = esc(title);
     if (mine.includes(emoji)) button.classList.add("mine");
     button.addEventListener("click", ev => {
       ev.stopPropagation();
@@ -568,4 +636,93 @@ function openPicker(message, anchor) {
   if (top + h > window.innerHeight - 8) top = Math.max(8, r.top - h - 4);
   picker.style.left = `${left}px`;
   picker.style.top = `${top}px`;
+}
+
+/* ------------------------------------------------------------------ *
+ *  Свои значки: правка
+ * ------------------------------------------------------------------ */
+
+/**
+ * Пункт в настройках модуля. Foundry делает `new Тип()` и зовёт render,
+ * а правку ведёт обычный диалог — своего окна тут не нужно.
+ */
+class OwnReactionsMenu extends foundry.applications.api.ApplicationV2 {
+  async render() {
+    await editOwn();
+    return this;
+  }
+}
+
+/** Строка редактора: картинка, подпись, путь, выбор файла, убрать. */
+function ownRow(own = { id: "", name: "", src: "" }) {
+  const e = s => foundry.utils.escapeHTML(String(s ?? ""));
+  return `
+    <div class="uo-r-svoj-stroka" data-id="${e(own.id)}">
+      <img class="uo-r-svoj-vid" src="${e(own.src || "icons/svg/hazard.svg")}" alt="">
+      <input type="text" class="uo-r-svoj-imya" value="${e(own.name)}" placeholder="${e(Т("подпись"))}">
+      <input type="text" class="uo-r-svoj-put" value="${e(own.src)}" placeholder="${e(Т("путь к картинке"))}">
+      <button type="button" class="uo-r-svoj-vybrat" data-tooltip="${e(Т("Выбрать файл"))}"><i class="fa-solid fa-file-image" inert></i></button>
+      <button type="button" class="uo-r-svoj-ubrat" data-tooltip="${e(Т("Убрать"))}"><i class="fa-solid fa-xmark" inert></i></button>
+    </div>`;
+}
+
+function wireRow(row) {
+  const path = row.querySelector(".uo-r-svoj-put");
+  const view = row.querySelector(".uo-r-svoj-vid");
+  const show = () => { view.src = path.value.trim() || "icons/svg/hazard.svg"; };
+  path.addEventListener("change", show);
+  row.querySelector(".uo-r-svoj-vybrat").addEventListener("click", () => {
+    new foundry.applications.apps.FilePicker.implementation({
+      type: "image",
+      current: path.value.trim(),
+      callback: chosen => { path.value = chosen; show(); },
+    }).render(true);
+  });
+  row.querySelector(".uo-r-svoj-ubrat").addEventListener("click", () => row.remove());
+}
+
+async function editOwn() {
+  if (!game.user.isGM) return;
+  const list = ownList();
+
+  await foundry.applications.api.DialogV2.wait({
+    window: { title: Т("Свои значки"), icon: "fa-solid fa-icons" },
+    position: { width: 600 },
+    content: `
+      <div class="uo-r-svoj-forma">
+        <p class="hint">${Т("Картинки встают в набор реакций после эмодзи, в этом порядке. Подпись видна по наведению. Убранный значок остаётся под сообщениями, где его уже поставили, — заглушкой.")}</p>
+        <div class="uo-r-svoj-spisok">${(list.length ? list : [undefined]).map(o => ownRow(o)).join("")}</div>
+        <button type="button" class="uo-r-svoj-dobavit"><i class="fa-solid fa-plus" inert></i> ${Т("Добавить значок")}</button>
+      </div>`,
+    buttons: [
+      {
+        action: "save", label: Т("Сохранить"), icon: "fa-solid fa-floppy-disk", default: true,
+        callback: async (event, button, dialog) => {
+          const rows = [...dialog.element.querySelectorAll(".uo-r-svoj-stroka")];
+          const next = rows.map(row => {
+            const src = row.querySelector(".uo-r-svoj-put").value.trim();
+            if (!src) return null;
+            const name = row.querySelector(".uo-r-svoj-imya").value.trim()
+              || decodeURIComponent(src.split("/").pop().replace(/\.[^.]+$/, ""));
+            return { id: row.dataset.id || foundry.utils.randomID(), name, src };
+          }).filter(Boolean);
+          await game.settings.set(MODULE_ID, OWN_SETTING, next);
+        },
+      },
+      { action: "cancel", label: Т("Отмена"), icon: "fa-solid fa-xmark" },
+    ],
+    render: (event, dialog) => {
+      const root = dialog.element;
+      const box = root.querySelector(".uo-r-svoj-spisok");
+      box.querySelectorAll(".uo-r-svoj-stroka").forEach(wireRow);
+      root.querySelector(".uo-r-svoj-dobavit").addEventListener("click", () => {
+        const holder = document.createElement("div");
+        holder.innerHTML = ownRow();
+        const row = holder.firstElementChild;
+        box.append(row);
+        wireRow(row);
+        row.querySelector(".uo-r-svoj-put").focus();
+      });
+    },
+  });
 }

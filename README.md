@@ -28,6 +28,7 @@ https://github.com/Nikifour/uo-chat-reactions/releases/latest/download/module.js
 - Click an emoji under a message to add the same one or take yours back.
   Your own reactions are highlighted in gold.
 - One message can have several emoji.
+- Besides emoji, the GM can add custom image icons to the set.
 
 ![The emoji picker](docs/picker.png)
 
@@ -81,10 +82,15 @@ that the player writes to their journal directly.
 |---|---|---|
 | Reaction set | 👍 👎 😂 😮 😢 😡 ❤️ 🔥 🎲 💀 | the emoji in the picker, separated by spaces |
 | Favourites: pages (per user) | a page for each speaker | how favourites are arranged in your journal |
+| Custom icons | — | your own images in the reaction set |
 | Module language (per user) | Same as Foundry | Russian if Foundry is in Russian, English otherwise; or pick one |
 
 Emoji removed from the set stay under the messages where they were already
 given, and you can always take yours back.
+
+**Custom icons** (*Custom icons → Edit icons*, GM only): your own images in the
+reaction set, next to the emoji — a party crest, the innkeeper's face, a mug
+of ale. Any image file works; the label shows on hover.
 
 ## License
 
