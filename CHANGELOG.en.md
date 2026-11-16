@@ -2,6 +2,12 @@
 
 One section per version, newest first.
 
+## 1.1.1 — 2026-11-16
+
+- Clicking the smiley again closes the emoji picker instead of reopening it.
+- The module archive now follows the zip standard, so it installs on Linux servers too.
+- Screenshots and the "Module language" setting in the README.
+
 ## 1.1.0 — 2026-11-16
 
 - **Favourites.** A star in the message header saves it to your journal "Favourites: your name": when it was said and what; for a roll, the formula and the total. Only you and the GM can see the journal.

@@ -62,8 +62,11 @@ Hooks.once("i18nInit", async () => {
 
 Hooks.once("ready", () => {
   game.socket.on(SOCKET, onRequest);
+  // Щелчок мимо набора закрывает его. Щелчок по той же улыбке — тоже,
+  // но это делает её собственный обработчик: иначе набор закрылся бы
+  // здесь и тут же открылся снова.
   document.addEventListener("pointerdown", ev => {
-    if (picker && !picker.contains(ev.target)) closePicker();
+    if (picker && !picker.contains(ev.target) && !pickerAnchor?.contains(ev.target)) closePicker();
   }, true);
   document.addEventListener("keydown", ev => {
     if (picker && ev.key === "Escape") closePicker();
@@ -144,7 +147,7 @@ async function toggle(message, emoji) {
 }
 
 /**
- * Просьба игрока. Отвечает только активный ведущий — иначе при двух ГМах
+ * Просьба игрока. Отвечает только активный ведущий — иначе при двух ведущих
  * запись шла бы дважды. Поставить можно только значок из набора, снять — любой:
  * набор могли сузить уже после того, как значок поставили.
  */
@@ -166,7 +169,7 @@ async function onRequest(data, senderId) {
  *  Избранное
  *
  *  У каждого участника свой журнал «Избранное: имя» в папке «Избранное».
- *  Хозяин журнала — сам участник, остальным он закрыт (ведущие видят всё,
+ *  Владелец журнала — сам участник, остальным он закрыт (ведущие видят всё,
  *  как всегда). Отмеченное сообщение — запись на странице журнала: когда
  *  и что сказано. Это копия, а не ссылка: сообщение удалят или чат очистят,
  *  а запись останется.
@@ -188,7 +191,6 @@ async function onRequest(data, senderId) {
 const FAV_JOURNAL = "izbrannoe";       // флаг журнала: чей он, id участника
 const FAV_FOLDER = "papka-izbrannogo"; // флаг папки
 const FAV_PAGE = "soobshcheniya";      // флаг страницы: id сообщений на ней
-const FAV_PAGE_OLD = "soobshchenie";   // так писала первая проба избранного: одно сообщение — одна страница
 const FAV_GROUP = "kto";               // флаг страницы: чья это страница
 
 /** Журнал избранного участника — по флагу, а не по имени: журнал могут переименовать. */
@@ -199,9 +201,7 @@ function favoritesOf(user) {
 /** Сообщения на странице избранного. */
 function idsOf(page) {
   const list = page.getFlag(MODULE_ID, FAV_PAGE);
-  if (Array.isArray(list)) return list;
-  const old = page.getFlag(MODULE_ID, FAV_PAGE_OLD);
-  return old ? [old] : [];
+  return Array.isArray(list) ? list : [];
 }
 
 /** Страница избранного, где уже лежит это сообщение. */
@@ -318,7 +318,7 @@ function singleName(message) {
   return short ? `${who}: ${short}` : who;
 }
 
-/** Вставить запись по времени сообщения. Блоки, которые хозяин переписал руками, не трогаются. */
+/** Вставить запись по времени сообщения. Блоки, которые владелец переписал руками, не трогаются. */
 function withEntry(html, entry, timestamp) {
   const box = document.createElement("div");
   box.innerHTML = html ?? "";
@@ -337,7 +337,7 @@ function withoutEntry(html, messageId) {
   return box.innerHTML;
 }
 
-/** Отметить или снять. Работает у того, кому это можно: у ведущего или у хозяина журнала. */
+/** Отметить или снять. Работает у того, кому это можно: у ведущего или у владельца журнала. */
 async function writeFavorite(message, user, on, layout) {
   if (!canSee(message, user)) return;
   const page = favoritePage(message, user);
@@ -528,15 +528,19 @@ function decorate(message, html) {
 }
 
 let picker = null;
+let pickerAnchor = null;
 
 function closePicker() {
   picker?.remove();
   picker = null;
+  pickerAnchor = null;
 }
 
 /** Всплывающий набор значков возле кнопки. Свои уже поставленные подсвечены. */
 function openPicker(message, anchor) {
+  if (picker && pickerAnchor === anchor) return closePicker();
   closePicker();
+  pickerAnchor = anchor;
   const mine = reactionsOf(message)[game.user.id] ?? [];
 
   picker = document.createElement("div");

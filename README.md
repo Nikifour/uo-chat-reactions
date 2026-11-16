@@ -17,7 +17,8 @@ https://github.com/Nikifour/uo-chat-reactions/releases/latest/download/module.js
 ```
 
 - Foundry VTT **v13–v14**, **any game system**, no other modules required.
-- The interface is in **English and Russian** and follows Foundry's language.
+- The interface is in **English and Russian**: it follows Foundry's language,
+  or pick one in the module settings.
 - A guide ships with the module as a compendium: *Chat Reactions · How to use*.
 
 ## How to react
@@ -80,6 +81,7 @@ that the player writes to their journal directly.
 |---|---|---|
 | Reaction set | 👍 👎 😂 😮 😢 😡 ❤️ 🔥 🎲 💀 | the emoji in the picker, separated by spaces |
 | Favourites: pages (per user) | a page for each speaker | how favourites are arranged in your journal |
+| Module language (per user) | Same as Foundry | Russian if Foundry is in Russian, English otherwise; or pick one |
 
 Emoji removed from the set stay under the messages where they were already
 given, and you can always take yours back.
