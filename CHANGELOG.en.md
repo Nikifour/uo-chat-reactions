@@ -2,6 +2,10 @@
 
 One section per version, newest first.
 
+## 1.2.1 — 2026-11-16
+
+- Taking back your last reaction no longer leaves an empty entry for you in the message data.
+
 ## 1.2.0 — 2026-11-16
 
 - **Custom icons.** The GM adds their own images to the reaction set, next to the emoji: a party crest, the innkeeper's face, a mug of ale. Module settings → "Custom icons" → "Edit icons": an image path or the file picker, and a label. The label shows on hover.

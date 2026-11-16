@@ -192,7 +192,13 @@ function writeReaction(message, userId, emoji, on) {
   const mine = new Set(reactionsOf(message)[userId] ?? []);
   if (on) mine.add(emoji);
   else mine.delete(emoji);
-  return message.update({ [`flags.${MODULE_ID}.${FLAG}.${userId}`]: [...mine] });
+  const path = `flags.${MODULE_ID}.${FLAG}`;
+  if (mine.size) return message.update({ [`${path}.${userId}`]: [...mine] });
+  // Снят последний значок — строка участника уходит целиком, без пустого списка.
+  const ForcedDeletion = foundry.data.operators?.ForcedDeletion;
+  return message.update(ForcedDeletion
+    ? { [`${path}.${userId}`]: new ForcedDeletion() }
+    : { [`${path}.-=${userId}`]: null });
 }
 
 /**
