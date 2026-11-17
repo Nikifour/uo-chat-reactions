@@ -13,6 +13,10 @@
  * автора и ведущего. Поэтому просьба уходит по сокету активному ведущему,
  * а тот проверяет её и пишет. Отправителя называет сервер, а не сама просьба:
  * поставить значок от чужого имени нельзя.
+ *
+ * Ответ на сообщение — обычное новое сообщение со ссылкой на исходное
+ * во флаге `flags.uo-reactions.otvet`. Его пишет сам отвечающий, ведущий
+ * тут не нужен.
  */
 
 import { Т, М, загрузитьЯзык } from "./yazyk.mjs";
@@ -43,6 +47,10 @@ const OWN_SETTING = "svoi";
 const OWN_MENU = "svoi-menu";
 const OWN_PREFIX = "img:";
 
+/** Ответы: флаг ответа и выключатель для всего мира. */
+const REPLY_FLAG = "otvet";
+const REPLY_SETTING = "otvety";
+
 Hooks.once("init", () => {
   game.settings.register(MODULE_ID, SET_SETTING, {
     name: М("Набор реакций"),
@@ -61,6 +69,12 @@ Hooks.once("init", () => {
     type: OwnReactionsMenu,
     restricted: true,
   });
+  game.settings.register(MODULE_ID, REPLY_SETTING, {
+    name: М("Ответы на сообщения"),
+    hint: М("Стрелка в шапке сообщения: ответить на него с цитатой. Ответ на шёпот уходит шёпотом тем же людям. Уже написанные ответы остаются и при выключенной настройке."),
+    scope: "world", config: true, type: Boolean, default: true,
+    onChange: () => { cancelReply(); redrawAll(); },
+  });
   // У каждого своя: журнал избранного личный, и раскладка в нём — тоже.
   game.settings.register(MODULE_ID, LAYOUT_SETTING, {
     name: М("Избранное: страницы"),
@@ -72,7 +86,7 @@ Hooks.once("init", () => {
 // Словарь читается уже после init, поэтому подписи настройки переводятся задним числом.
 Hooks.once("i18nInit", async () => {
   await загрузитьЯзык(MODULE_ID);
-  for (const key of [SET_SETTING, LAYOUT_SETTING]) {
+  for (const key of [SET_SETTING, LAYOUT_SETTING, REPLY_SETTING]) {
     const setting = game.settings.settings.get(`${MODULE_ID}.${key}`);
     if (!setting) continue;
     setting.name = Т(setting.name);
@@ -149,8 +163,23 @@ function nameOf(key) {
 function refreshOwnChips() {
   for (const message of game.messages ?? []) {
     const used = Object.values(reactionsOf(message)).flat();
-    if (used.some(k => typeof k === "string" && k.startsWith(OWN_PREFIX))) ui.chat?.updateMessage?.(message);
+    if (used.some(k => typeof k === "string" && k.startsWith(OWN_PREFIX))) redraw(message);
   }
+}
+
+/**
+ * Перерисовать сообщение, если оно сейчас в чате. Сообщение, которое ещё
+ * не подгружено, не трогаем: Foundry вставил бы его в чат вне очереди.
+ */
+function redraw(message) {
+  const shown = [ui.chat?.element, ui.chat?.popout?.element]
+    .some(root => root?.querySelector?.(`.chat-message[data-message-id="${message.id}"]`));
+  if (shown) ui.chat.updateMessage(message);
+}
+
+/** Перерисовать всё, что сейчас в чате. */
+function redrawAll() {
+  for (const message of game.messages ?? []) redraw(message);
 }
 
 /** Реакции сообщения: { userId: ["👍", …] }. */
@@ -327,11 +356,17 @@ async function ensureFavorites(user) {
   });
 }
 
-/** Текст без разметки — для названия страницы. */
+/**
+ * Разметка сообщения как отдельный документ. DOMParser не грузит картинки
+ * и не запускает обработчики, так что чужой текст разбирается безопасно.
+ */
+function parsed(html) {
+  return new DOMParser().parseFromString(String(html ?? ""), "text/html").body;
+}
+
+/** Текст без разметки — для названия страницы и цитаты. */
 function plain(html) {
-  const div = document.createElement("div");
-  div.innerHTML = html ?? "";
-  return div.textContent.replace(/\s+/g, " ").trim();
+  return parsed(html).textContent.replace(/\s+/g, " ").trim();
 }
 
 /** Кто сказал: имя из шапки сообщения, иначе автор. */
@@ -494,7 +529,7 @@ function refreshStars(page, gone = false) {
   const changed = [...before.filter(id => !now.includes(id)), ...now.filter(id => !before.includes(id))];
   for (const id of changed) {
     const message = game.messages.get(id);
-    if (message) ui.chat?.updateMessage?.(message);
+    if (message) redraw(message);
   }
 }
 Hooks.once("ready", () => {
@@ -515,6 +550,11 @@ Hooks.on("getChatMessageContextOptions", (app, options) => {
   const messageOf = li => game.messages.get((li?.dataset ? li : li?.[0])?.dataset?.messageId);
   options.push(
     {
+      name: Т("Ответить"), icon: '<i class="fa-solid fa-reply"></i>',
+      condition: li => repliesOn() && !!messageOf(li),
+      callback: li => { const m = messageOf(li); if (m) startReply(m); },
+    },
+    {
       name: Т("В избранное"), icon: '<i class="fa-regular fa-star"></i>',
       condition: li => { const m = messageOf(li); return !!m && !favoritePage(m); },
       callback: li => { const m = messageOf(li); if (m) toggleFavorite(m); },
@@ -526,6 +566,323 @@ Hooks.on("getChatMessageContextOptions", (app, options) => {
     },
   );
 });
+
+/* ------------------------------------------------------------------ *
+ *  Ответы
+ *
+ *  Стрелка в шапке сообщения ставит над полем ввода полоску «Ответ: кому»,
+ *  и следующее сообщение из чата уходит ответом: во флаге ответа — id
+ *  исходного сообщения. Над текстом ответа стоит цитата, щелчок по ней
+ *  ведёт к исходному. Под исходным — счётчик ответов, щелчок ведёт
+ *  к ответам по очереди.
+ *
+ *  Цитата не должна выдавать шёпот. Поэтому текст цитаты берётся из самого
+ *  исходного сообщения и показывается только тем, кто его видит. Отрывок
+ *  про запас (на случай, если исходное удалят) сохраняется в ответ, только
+ *  когда исходное открытое. А ответ на шёпот сам уходит шёпотом тем же
+ *  людям — если отвечающий не выбрал адресатов сам.
+ * ------------------------------------------------------------------ */
+
+/** Ответы включены в этом мире. */
+function repliesOn() {
+  return game.settings.get(MODULE_ID, REPLY_SETTING) !== false;
+}
+
+/** На что отвечает сообщение: { id, kto?, otryvok? } или null. */
+function replyOf(message) {
+  const reply = message.getFlag(MODULE_ID, REPLY_FLAG);
+  return reply?.id ? reply : null;
+}
+
+/** Открытое для всех: не шёпот и не слепой бросок. */
+function isPublic(message) {
+  return !message.blind && !message.whisper.length;
+}
+
+/**
+ * О чём сообщение, в одну строку: у броска формула и итог, у карточки
+ * предмета или заклинания — её заголовок, у реплики — сам текст.
+ */
+function gistOf(message) {
+  const rolls = message.rolls ?? [];
+  const flavor = plain(message.flavor);
+  let gist;
+  if (rolls.length) {
+    const sums = rolls.map(r => `${r.formula} = ${r.total}`).join(", ");
+    gist = flavor ? `${flavor}: ${sums}` : sums;
+  } else {
+    const body = parsed(message.content);
+    const card = body.querySelector(".chat-card, .card-header, [data-item-id], [data-item-uuid]");
+    const head = card ? body.querySelector("h1, h2, h3, h4, .item-name, .title") : null;
+    gist = flavor || plain(head?.innerHTML) || plain(body.innerHTML);
+  }
+  gist ||= Т("сообщение");
+  return gist.length > 120 ? `${gist.slice(0, 119).trimEnd()}…` : gist;
+}
+
+/*
+ * Кто кому ответил: id исходного → id ответов. Собирается при первом
+ * обращении: Foundry рисует чат ещё до «ready», и счётчик под сообщением
+ * нужен уже тогда. Дальше список следит за созданием и удалением сообщений.
+ */
+const repliesTo = new Map();
+let indexed = false;
+
+function ensureIndex() {
+  if (indexed || !game.messages) return;
+  indexed = true;
+  for (const message of game.messages) indexReply(message);
+}
+
+function indexReply(message) {
+  const reply = replyOf(message);
+  if (!reply) return null;
+  if (!repliesTo.has(reply.id)) repliesTo.set(reply.id, new Set());
+  repliesTo.get(reply.id).add(message.id);
+  return reply.id;
+}
+
+/** Ответы на сообщение, которые видит этот участник, по времени. */
+function visibleReplies(message) {
+  ensureIndex();
+  return [...(repliesTo.get(message.id) ?? [])]
+    .map(id => game.messages.get(id))
+    .filter(m => m?.visible)
+    .sort((a, b) => a.timestamp - b.timestamp);
+}
+
+function rerender(id) {
+  const message = game.messages.get(id);
+  if (message) redraw(message);
+}
+
+Hooks.on("createChatMessage", message => {
+  ensureIndex();
+  const target = indexReply(message);
+  if (target) rerender(target);
+  if (target && target === replyingTo && message.author?.id === game.user.id) cancelReply();
+});
+Hooks.on("deleteChatMessage", message => {
+  ensureIndex();
+  const target = replyOf(message)?.id;
+  if (target) {
+    repliesTo.get(target)?.delete(message.id);
+    rerender(target);
+  }
+  // Исходное удалили — его ответы перерисуются с отрывком про запас.
+  for (const id of repliesTo.get(message.id) ?? []) rerender(id);
+});
+
+/* Полоска «Ответ: кому» над полем ввода. */
+let replyingTo = null;
+let replyBar = null;
+
+function chatInput() {
+  return document.getElementById("chat-message");
+}
+
+function startReply(message) {
+  if (!repliesOn()) return;
+  cancelReply();
+  replyingTo = message.id;
+
+  replyBar = document.createElement("div");
+  replyBar.className = "uo-r-otvet-bar";
+  const icon = document.createElement("i");
+  icon.className = "fa-solid fa-reply";
+  icon.inert = true;
+  const text = document.createElement("span");
+  text.className = "uo-r-otvet-tekst";
+  const who = document.createElement("strong");
+  who.textContent = speakerName(message);
+  text.append(`${Т("Ответ")}: `, who, ` — ${gistOf(message)}`);
+  const close = document.createElement("a");
+  close.className = "uo-r-otvet-ubrat";
+  close.dataset.tooltip = Т("Не отвечать");
+  close.setAttribute("aria-label", Т("Не отвечать"));
+  close.innerHTML = '<i class="fa-solid fa-xmark" inert></i>';
+  close.addEventListener("click", ev => {
+    ev.preventDefault();
+    cancelReply();
+  });
+  replyBar.append(icon, text, close);
+  placeReplyBar();
+  chatInput()?.focus();
+}
+
+function cancelReply() {
+  replyingTo = null;
+  replyBar?.remove();
+  replyBar = null;
+}
+
+/** Поле ввода Foundry переезжает (в окно чата, к всплывающим сообщениям) — полоска едет за ним. */
+function placeReplyBar() {
+  const input = chatInput();
+  if (replyBar && input) input.before(replyBar);
+}
+Hooks.on("renderChatInput", () => placeReplyBar());
+
+Hooks.once("ready", () => {
+  document.addEventListener("keydown", ev => {
+    if (replyBar && ev.key === "Escape" && ev.target === chatInput()) cancelReply();
+  });
+});
+
+/*
+ * Отправка из поля ввода. Хук зовётся только для того, что набрано в чате:
+ * бросок с листа персонажа или карточка заклинания ответом не станут.
+ * Ссылка кладётся прямо в данные будущего сообщения.
+ */
+Hooks.on("chatMessage", (log, text, chatData) => {
+  if (!replyingTo || !repliesOn()) return;
+  const target = game.messages.get(replyingTo);
+  if (!target) return cancelReply();
+  const reply = { id: target.id };
+  if (isPublic(target)) {
+    reply.kto = speakerName(target);
+    reply.otryvok = gistOf(target);
+  }
+  chatData.flags = foundry.utils.mergeObject(chatData.flags ?? {}, { [MODULE_ID]: { [REPLY_FLAG]: reply } });
+});
+
+/*
+ * Ответ на шёпот — шёпотом тем же людям: адресатам и автору исходного.
+ * Режим сообщения Foundry применяет раньше этого хука, поэтому здесь видно,
+ * выбрал ли отвечающий адресатов сам (/w, «только ведущему») — тогда
+ * его выбор не трогается.
+ */
+Hooks.on("preCreateChatMessage", (message) => {
+  const reply = replyOf(message);
+  if (!reply || message.whisper.length) return;
+  const target = game.messages.get(reply.id);
+  if (!target?.whisper.length) return;
+  const group = new Set(target.whisper);
+  if (target.author) group.add(target.author.id);
+  group.delete(game.user.id);
+  message.updateSource({ whisper: group.size ? [...group] : [game.user.id], blind: false });
+});
+
+/** Цитата над текстом ответа. */
+function quoteOf(message) {
+  const reply = replyOf(message);
+  if (!reply) return null;
+  const target = game.messages.get(reply.id);
+
+  let who = null;
+  let gist;
+  let state = "";
+  if (target?.visible) {
+    who = speakerName(target);
+    gist = gistOf(target);
+  } else if (target) {
+    gist = Т("скрытое сообщение");
+    state = "skryto";
+  } else if (reply.otryvok) {
+    who = reply.kto ?? null;
+    gist = reply.otryvok;
+    state = "udaleno";
+  } else {
+    gist = Т("сообщение удалено");
+    state = "udaleno";
+  }
+
+  const quote = document.createElement("a");
+  quote.className = "uo-r-citata";
+  if (state) quote.classList.add(state);
+  const icon = document.createElement("i");
+  icon.className = "fa-solid fa-reply";
+  icon.inert = true;
+  quote.append(icon);
+  if (who) {
+    const name = document.createElement("strong");
+    name.textContent = who;
+    quote.append(name);
+  }
+  const text = document.createElement("span");
+  text.textContent = gist;
+  quote.append(text);
+  if (target?.visible) {
+    quote.dataset.tooltip = Т("К исходному сообщению");
+    quote.addEventListener("click", ev => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      jumpTo(target.id);
+    });
+  } else if (state === "udaleno") {
+    quote.dataset.tooltip = Т("Исходное сообщение удалено");
+  }
+  return quote;
+}
+
+/** Счётчик ответов под исходным. Щелчок ведёт к ответам по очереди. */
+const nextReply = new Map();
+
+function counterOf(message) {
+  const replies = visibleReplies(message);
+  if (!replies.length) return null;
+  const counter = document.createElement("button");
+  counter.type = "button";
+  counter.className = "uo-r-chip uo-r-otvety";
+  if (replies.some(m => m.author?.id === game.user.id)) counter.classList.add("mine");
+  const names = [...new Set(replies.map(m => speakerName(m)))].map(esc).join(", ");
+  counter.dataset.tooltip = names;
+  counter.dataset.tooltipDirection = "UP";
+  const icon = document.createElement("i");
+  icon.className = "uo-r-strelka fa-solid fa-reply";
+  icon.inert = true;
+  const count = document.createElement("span");
+  count.className = "uo-r-count";
+  count.textContent = replies.length;
+  counter.append(icon, count);
+  counter.setAttribute("aria-label", Т("Ответы: {число}", { число: replies.length }));
+  counter.addEventListener("click", ev => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    const i = (nextReply.get(message.id) ?? 0) % replies.length;
+    nextReply.set(message.id, i + 1);
+    jumpTo(replies[i].id);
+  });
+  return counter;
+}
+
+/** Где в чате это сообщение: в окне чата, если оно открыто, иначе в боковой панели. */
+function findRendered(id) {
+  for (const root of [ui.chat?.popout?.element, ui.chat?.element]) {
+    const li = root?.querySelector?.(`.chat-log .chat-message[data-message-id="${id}"]`);
+    if (li) return li;
+  }
+  return null;
+}
+
+/**
+ * Прокрутить к сообщению и подсветить его. Старые сообщения Foundry
+ * подгружает пачками при прокрутке вверх — догружаем пачки, пока
+ * сообщение не появится.
+ */
+async function jumpTo(id) {
+  const target = game.messages.get(id);
+  if (!target) return ui.notifications.info(Т("Это сообщение уже удалено."));
+  if (!target.visible) return;
+  if (!ui.chat?.popout?.rendered) {
+    ui.sidebar?.expand?.();
+    ui.sidebar?.changeTab?.("chat", "primary");
+  }
+  let li = findRendered(id);
+  for (let guard = 0; !li && guard < 100; guard++) {
+    const log = ui.chat?.element?.querySelector(".chat-log");
+    const before = log?.childElementCount ?? 0;
+    await ui.chat.renderBatch(CONFIG.ChatMessage.batchSize);
+    li = findRendered(id);
+    if (!li && (log?.childElementCount ?? 0) === before) break;
+  }
+  if (!li) return;
+  li.scrollIntoView({ block: "center", behavior: "smooth" });
+  li.classList.remove("uo-r-vspyshka");
+  void li.offsetWidth;
+  li.classList.add("uo-r-vspyshka");
+  setTimeout(() => li.classList.remove("uo-r-vspyshka"), 1600);
+}
 
 /* ------------------------------------------------------------------ *
  *  Вид
@@ -561,13 +918,36 @@ function decorate(message, html) {
       toggleFavorite(message);
     });
 
+    const buttons = [star, add];
+    if (repliesOn()) {
+      const answer = document.createElement("a");
+      answer.className = "uo-r-reply";
+      answer.dataset.tooltip = Т("Ответить");
+      answer.setAttribute("aria-label", Т("Ответить"));
+      answer.innerHTML = '<i class="fa-solid fa-reply" inert></i>';
+      answer.addEventListener("click", ev => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        startReply(message);
+      });
+      buttons.unshift(answer);
+    }
+
     const closer = metadata.querySelector(".message-delete, .message-dismiss");
-    if (closer) closer.before(star, add);
-    else metadata.append(star, add);
+    if (closer) closer.before(...buttons);
+    else metadata.append(...buttons);
+  }
+
+  const content = html.querySelector(".message-content");
+  const quote = quoteOf(message);
+  if (quote) {
+    if (content) content.prepend(quote);
+    else html.prepend(quote);
   }
 
   const counts = tally(message);
-  if (!counts.length) return;
+  const counter = repliesOn() ? counterOf(message) : null;
+  if (!counts.length && !counter) return;
 
   const bar = document.createElement("div");
   bar.className = "uo-reakcii";
@@ -593,8 +973,8 @@ function decorate(message, html) {
     });
     bar.append(chip);
   }
+  if (counter) bar.append(counter);
 
-  const content = html.querySelector(".message-content");
   if (content) content.after(bar);
   else html.append(bar);
 }

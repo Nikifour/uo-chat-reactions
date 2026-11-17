@@ -26,5 +26,17 @@
   "Страница на каждое сообщение": "A page for each message",
   "Убрано из избранного.": "Removed from favourites.",
   "Убрать": "Remove",
-  "Убрать из избранного": "Remove from favourites"
+  "Убрать из избранного": "Remove from favourites",
+  "Ответы на сообщения": "Replies to messages",
+  "Стрелка в шапке сообщения: ответить на него с цитатой. Ответ на шёпот уходит шёпотом тем же людям. Уже написанные ответы остаются и при выключенной настройке.": "An arrow in the message header: reply to it with a quote. A reply to a whisper goes as a whisper to the same people. Replies already written stay even with this setting off.",
+  "Ответить": "Reply",
+  "Ответ": "Reply to",
+  "Не отвечать": "Cancel the reply",
+  "сообщение": "message",
+  "скрытое сообщение": "hidden message",
+  "сообщение удалено": "message deleted",
+  "К исходному сообщению": "Go to the original message",
+  "Исходное сообщение удалено": "The original message was deleted",
+  "Ответы: {число}": "Replies: {число}",
+  "Это сообщение уже удалено.": "That message has already been deleted."
 }

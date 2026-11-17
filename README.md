@@ -4,7 +4,8 @@
 
 Emoji reactions under any chat message in Foundry VTT: a line, a roll, an item
 or spell card. The number next to an emoji is how many people gave it; hover
-to see who. A star saves the message to your own favourites journal.
+to see who. Reply to a message with a quote, and a star saves it to your own
+favourites journal.
 
 ![Reactions under chat messages, with the names on hover](docs/chat.png)
 
@@ -31,6 +32,18 @@ https://github.com/Nikifour/uo-chat-reactions/releases/latest/download/module.js
 - Besides emoji, the GM can add custom image icons to the set.
 
 ![The emoji picker](docs/picker.png)
+
+## Replies
+
+The arrow next to the smiley lets you reply to a message, the way social
+networks do. A bar appears above the chat input; send your message as usual
+and a quote of the original appears above it. Click the quote to jump to the
+original, even one far up the chat. Under the original a counter shows how
+many replies it has; click it to go through them one by one.
+
+A reply to a whisper goes as a whisper to the same people, and the quote of a
+whisper is visible only to those who saw the whisper itself. If you pick the
+recipients yourself with `/w`, the module leaves your choice alone.
 
 ## Favourites
 
@@ -83,6 +96,7 @@ that the player writes to their journal directly.
 | Reaction set | 👍 👎 😂 😮 😢 😡 ❤️ 🔥 🎲 💀 | the emoji in the picker, separated by spaces |
 | Favourites: pages (per user) | a page for each speaker | how favourites are arranged in your journal |
 | Custom icons | — | your own images in the reaction set |
+| Replies to messages | on | the reply arrow and the reply counter |
 | Module language (per user) | Same as Foundry | Russian if Foundry is in Russian, English otherwise; or pick one |
 
 Emoji removed from the set stay under the messages where they were already

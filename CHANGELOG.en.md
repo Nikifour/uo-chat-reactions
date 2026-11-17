@@ -2,6 +2,14 @@
 
 One section per version, newest first.
 
+## 1.3.0 — 2026-11-16
+
+- **Replies.** An arrow in the message header lets you reply to it with a quote, the way social networks do. The reply shows who and what it answers; clicking the quote takes you to the original message, even one far up the chat. Under the original a reply counter takes you through the replies one by one.
+- A reply to a whisper goes as a whisper to the same people. The quote of a whisper is visible only to those who saw the whisper itself.
+- Replies can be switched off for the whole world in the module settings.
+- The placeholder of a removed custom icon now shows as a picture icon, not an empty square.
+- Changing custom icons no longer pulls older, not yet loaded messages into the chat.
+
 ## 1.2.1 — 2026-11-16
 
 - Taking back your last reaction no longer leaves an empty entry for you in the message data.

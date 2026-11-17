@@ -34,6 +34,18 @@ A whisper can be saved only by those it was addressed to, and a blind roll only 
 
 The first time, the journal is created by the GM: Foundry does not let players create journals. So the first star works while a GM is in the game; after that the journal is yours and you write to it yourself.
 
+## Replies
+
+Next to the smiley and the star in a message header there is an arrow. Click it and a bar appears above the chat input: "Reply to: who — what about". Write your reply and send it as usual: a quote of the message you replied to appears above yours. Changed your mind? The cross on the bar, or Esc. The same is in the message's right-click menu: "Reply".
+
+Clicking the quote takes you to the original message: the chat scrolls to it and highlights it, loading older history if it is far up. Under the original a reply counter with an arrow grows; clicking it takes you through the replies one by one, and hovering shows who replied.
+
+A reply to a whisper goes as a whisper to the same people: the recipients and the author of the original. If you pick the recipients yourself — with /w or the "GM only" mode — the module leaves your choice alone.
+
+The quote of a whisper is visible only to those who saw the whisper itself; everyone else sees "hidden message". If the original is deleted, a reply to a public message keeps its quote, and a reply to a whisper says "message deleted".
+
+Only what you type in the chat becomes a reply: a roll from a character sheet or a spell card sent while the bar is shown does not. Replies can be switched off for the whole world in the module settings; quotes already written stay.
+
 ## The emoji set
 
 The GM changes the set in the module settings: "Reaction set", emoji separated by spaces. New emoji show up in the picker at once. Reactions already given stay under their messages even if you remove their emoji from the set, and you can always take yours back.
