@@ -2,7 +2,7 @@
   "id": "uo-reactions",
   "title": "UO · Chat Reactions",
   "description": "<p>Emoji reactions under any chat message — lines, rolls, item and spell cards. Hover to see who reacted; add your own image icons next to the emoji. Reply to a message with a quote; a star saves it to your own favourites journal. Any game system. English and Russian.</p><p>Отклик значком под любым сообщением чата: кто что поставил, видно по наведению; к эмодзи можно добавить свои значки-картинки. На сообщение можно ответить с цитатой, а звезда уносит его в личный журнал избранного.</p>",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "url": "https://github.com/Nikifour/uo-chat-reactions",
   "manifest": "https://github.com/Nikifour/uo-chat-reactions/releases/latest/download/module.json",
   "readme": "https://github.com/Nikifour/uo-chat-reactions/blob/main/README.md",
@@ -84,5 +84,5 @@
       }
     }
   ],
-  "download": "https://github.com/Nikifour/uo-chat-reactions/releases/download/v1.3.0/module.zip"
+  "download": "https://github.com/Nikifour/uo-chat-reactions/releases/download/v1.3.1/module.zip"
 }

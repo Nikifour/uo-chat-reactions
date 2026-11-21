@@ -2,6 +2,10 @@
 
 One section per version, newest first.
 
+## 1.3.1 — 2026-11-21
+
+- With the dnd5e 5 system, the reactions under a message now respond to the mouse: you can see who reacted, a click adds or takes back a reaction, and the reply counter takes you to the replies. The message background drawn by that system was covering them.
+
 ## 1.3.0 — 2026-11-16
 
 - **Replies.** An arrow in the message header lets you reply to it with a quote, the way social networks do. The reply shows who and what it answers; clicking the quote takes you to the original message, even one far up the chat. Under the original a reply counter takes you through the replies one by one.
